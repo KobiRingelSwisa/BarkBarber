@@ -11,8 +11,9 @@
 - **JWT Authentication** - מערכת אימות
 
 ### Frontend
-- **Next.js** - Framework מבוסס React
+- **React** - UI Library
 - **TypeScript** - Type safety
+- **Vite** - Build tool
 - **Tailwind CSS** - Styling
 - **Axios** - HTTP client
 
@@ -28,7 +29,7 @@ DogBarbershopAppointmentsSystem/
 ├── Backend/
 │   └── DogBarbershopAPI/          # .NET Web API
 ├── Frontend/
-│   └── dog-barbershop-client/     # Next.js Application
+│   └── dog-barbershop-client/     # React Application
 └── Database/
     └── Scripts/                    # SQL Scripts
 ```
