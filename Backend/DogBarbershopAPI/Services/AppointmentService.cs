@@ -235,6 +235,12 @@ public class AppointmentService : IAppointmentService
             return null;
         }
 
+        // Cannot edit completed appointments
+        if (appointment.Status == "Completed")
+        {
+            return null;
+        }
+
         var appointmentType = await _context.AppointmentTypes
             .FirstOrDefaultAsync(at => at.Id == request.AppointmentTypeId);
 
@@ -297,6 +303,14 @@ public class AppointmentService : IAppointmentService
             return false;
         }
 
+        // Check if appointment is scheduled for today - cannot delete same-day appointments
+        var today = DateTime.UtcNow.Date;
+        var appointmentDate = appointment.ScheduledDate.Date;
+        if (appointmentDate == today)
+        {
+            return false;
+        }
+
         _context.Appointments.Remove(appointment);
         await _context.SaveChangesAsync();
 
@@ -308,7 +322,10 @@ public class AppointmentService : IAppointmentService
         var appointment = await _context.Appointments
             .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
-        return appointment != null && appointment.UserId == userId;
+        // User can modify only if appointment exists, belongs to them, and is not completed
+        return appointment != null 
+            && appointment.UserId == userId 
+            && appointment.Status != "Completed";
     }
 
     public async Task<bool> CanUserDeleteAppointmentAsync(int appointmentId, int userId)
@@ -376,28 +393,28 @@ public class AppointmentService : IAppointmentService
     private async Task<decimal> CalculateDiscountAsync(int userId, int appointmentTypeId, DateTime createdAt)
     {
         try
+    {
+        var connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+        using var connection = new SqlConnection(connectionString);
+        await connection.OpenAsync();
+
+        using var command = new SqlCommand("sp_CalculateAppointmentPrice", connection)
         {
-            var connectionString = _configuration.GetConnectionString("DefaultConnection");
+            CommandType = System.Data.CommandType.StoredProcedure
+        };
 
-            using var connection = new SqlConnection(connectionString);
-            await connection.OpenAsync();
-
-            using var command = new SqlCommand("sp_CalculateAppointmentPrice", connection)
-            {
-                CommandType = System.Data.CommandType.StoredProcedure
-            };
-
-            command.Parameters.AddWithValue("@UserId", userId);
-            command.Parameters.AddWithValue("@AppointmentTypeId", appointmentTypeId);
+        command.Parameters.AddWithValue("@UserId", userId);
+        command.Parameters.AddWithValue("@AppointmentTypeId", appointmentTypeId);
             command.Parameters.AddWithValue("@CreatedAt", createdAt);
-            command.Parameters.Add("@BasePrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
-            command.Parameters.Add("@DiscountAmount", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
-            command.Parameters.Add("@FinalPrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
+        command.Parameters.Add("@BasePrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
+        command.Parameters.Add("@DiscountAmount", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
+        command.Parameters.Add("@FinalPrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
 
-            await command.ExecuteNonQueryAsync();
+        await command.ExecuteNonQueryAsync();
 
-            var discountAmount = (decimal)command.Parameters["@DiscountAmount"].Value;
-            return discountAmount;
+        var discountAmount = (decimal)command.Parameters["@DiscountAmount"].Value;
+        return discountAmount;
         }
         catch (SqlException ex)
         {

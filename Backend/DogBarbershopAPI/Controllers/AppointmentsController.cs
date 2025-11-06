@@ -98,6 +98,18 @@ public class AppointmentsController : ControllerBase
             return Forbid("You can only edit your own appointments.");
         }
 
+        // Check if appointment is completed - cannot edit completed appointments
+        var appointment = await _appointmentService.GetAppointmentByIdAsync(id, userId);
+        if (appointment == null)
+        {
+            return NotFound("Appointment not found.");
+        }
+
+        if (appointment.Status == "Completed")
+        {
+            return BadRequest(new { message = "לא ניתן לערוך תורים שהושלמו." });
+        }
+
         if (request.AppointmentTypeId <= 0)
         {
             return BadRequest("Invalid appointment type.");
@@ -133,6 +145,14 @@ public class AppointmentsController : ControllerBase
         if (appointment.UserId != userId)
         {
             return BadRequest(new { message = "ניתן למחוק רק את התורים שלך." });
+        }
+
+        // Check if appointment is scheduled for today - cannot delete same-day appointments
+        var today = DateTime.UtcNow.Date;
+        var appointmentDate = appointment.ScheduledDate.Date;
+        if (appointmentDate == today)
+        {
+            return BadRequest(new { message = "לא ניתן למחוק תורים באותו היום." });
         }
 
         var deleted = await _appointmentService.DeleteAppointmentAsync(id, userId);

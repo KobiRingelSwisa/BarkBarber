@@ -13,19 +13,17 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
 }) => {
   return (
-    <header className="bg-white border-b border-amber-200 shadow-sm">
+    <header className="bg-transparent border-b border-transparent shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <Link to="/" className="flex items-center space-x-3 group">
             <img
               src="/logo.png"
               alt="BarkBarber Logo"
-              className="h-12 w-12 object-contain"
+              className="h-32 w-32 object-contain"
             />
             <div className="flex flex-col">
-              <span className="text-amber-800 font-bold text-2xl tracking-tight">
-                BarkBarber
-              </span>
+              
             </div>
           </Link>
 
@@ -33,12 +31,8 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="flex items-center space-x-6">
               {userName && (
                 <div className="hidden sm:flex items-center space-x-2">
-                  <div className="w-10 h-10 bg-amber-700 rounded-full flex items-center justify-center">
-                    <span className="text-amber-100 font-semibold text-sm">
-                      {userName.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <span className="text-gray-700 font-medium">
+                  
+                  <span className="text-gray-700 font-medium ml-2">
                     ברוך הבא, {userName}
                   </span>
                 </div>

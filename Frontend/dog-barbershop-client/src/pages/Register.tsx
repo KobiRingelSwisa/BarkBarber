@@ -5,6 +5,7 @@ import { Header } from '../components/Header';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { Card } from '../components/Card';
+import { PawsBackground } from '../components/PawsBackground';
 
 export const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -31,32 +32,27 @@ export const Register: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50">
+    <div className="min-h-screen relative">
+      <PawsBackground backgroundColor="#FFD79B" patternColor="#E07A5F" />
       <Header />
       <div className="flex items-center justify-center min-h-[calc(100vh-5rem)] py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div className="hidden lg:block">
             <div className="relative">
-              <div className="absolute -top-4 -right-4 w-16 h-16 bg-amber-700 rounded-full opacity-20 animate-pulse"></div>
-              <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-amber-600 rounded-full opacity-30 animate-pulse delay-75"></div>
               <div className="w-full max-w-md mx-auto flex items-center justify-center">
-                <svg className="w-full h-full text-amber-800" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="150" cy="150" r="120" fill="#FEEFAD" stroke="#4A3F35" strokeWidth="4"/>
-                  <circle cx="120" cy="120" r="12" fill="#4A3F35"/>
-                  <circle cx="180" cy="120" r="12" fill="#4A3F35"/>
-                  <path d="M 105 165 Q 150 185 195 165" stroke="#4A3F35" strokeWidth="6" strokeLinecap="round" fill="none"/>
-                  <ellipse cx="150" cy="210" rx="45" ry="30" fill="#4A3F35"/>
-                  <path d="M 75 90 Q 45 75 30 105" stroke="#4A3F35" strokeWidth="6" strokeLinecap="round" fill="none"/>
-                  <path d="M 225 90 Q 255 75 270 105" stroke="#4A3F35" strokeWidth="6" strokeLinecap="round" fill="none"/>
-                  <path d="M 150 75 Q 135 45 150 30" stroke="#4A3F35" strokeWidth="4" strokeLinecap="round" fill="none"/>
-                  <circle cx="127" cy="68" r="4" fill="#4A3F35"/>
-                  <circle cx="173" cy="68" r="4" fill="#4A3F35"/>
-                </svg>
+                <img
+                  src="/dog-illustration.png"
+                  alt="כלב חמוד"
+                  className="w-full h-full max-w-sm object-contain"
+                />
               </div>
             </div>
           </div>
 
-          <Card className="w-full p-8 lg:p-10 shadow-2xl">
+          <Card 
+            className="w-full p-8 lg:p-10 shadow-2xl"
+            spotlightColor="rgba(255, 183, 77, 0.2)"
+          >
             <div className="text-center mb-8">
               <h2 className="text-4xl font-bold text-amber-900 mb-3">
                 צור חשבון

@@ -40,7 +40,10 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({ appointment,
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl bg-white">
+      <Card 
+        className="max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl bg-white"
+        spotlightColor="rgba(251, 191, 36, 0.15)"
+      >
         <div className="p-8">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-amber-900">פרטי התור</h2>
@@ -64,11 +67,6 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({ appointment,
                 <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">סוג התור</label>
                 <p className="text-xl font-bold text-amber-900">{appointment.appointmentTypeName || 'לא זמין'}</p>
                 <p className="text-sm text-amber-700 mt-1">{appointment.durationMinutes} דקות</p>
-              </div>
-
-              <div className="bg-amber-50 rounded-lg p-4">
-                <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">תאריך מתוכנן</label>
-                <p className="text-xl font-bold text-amber-900">{formatDate(appointment.scheduledDate)}</p>
               </div>
 
               <div className="bg-amber-50 rounded-lg p-4">
@@ -99,14 +97,17 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({ appointment,
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-amber-200 pt-6">
-              <div className="bg-amber-50 rounded-lg p-4">
-                <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">תור נוצר</label>
-                <p className="text-sm font-medium text-amber-900">{formatDate(appointment.createdAt)}</p>
-              </div>
-              <div className="bg-amber-50 rounded-lg p-4">
-                <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">חשבון משתמש נוצר</label>
-                <p className="text-sm font-medium text-amber-900">{formatDate(appointment.userCreatedAt)}</p>
+            <div className="border-t border-amber-200 pt-6">
+              <h3 className="text-xl font-bold text-amber-900 mb-4">פרטי זמן</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-amber-50 rounded-lg p-4">
+                  <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">זמן יצירת בקשת התור</label>
+                  <p className="text-lg font-bold text-amber-900">{formatDate(appointment.createdAt)}</p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-4">
+                  <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">תאריך ושעה מתוכננים</label>
+                  <p className="text-lg font-bold text-amber-900">{formatDate(appointment.scheduledDate)}</p>
+                </div>
               </div>
             </div>
           </div>

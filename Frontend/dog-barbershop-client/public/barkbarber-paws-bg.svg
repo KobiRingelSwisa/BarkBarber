@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080" role="img" aria-labelledby="title desc">
+  <title id="title">BarkBarber Seamless Background</title>
+  <desc id="desc">A cute, seamless pattern of paw prints and bones in a soft teal/cream palette for login/register pages.</desc>
+
+  <!-- Editable color variables (change once) -->
+  <defs>
+    <style type="text/css"><![CDATA[
+      :root {
+        --bb-bg: #FFF7EE;         /* cream background */
+        --bb-teal: #00BFA6;       /* primary teal */
+        --bb-teal-20: rgba(0,191,166,0.20);
+        --bb-teal-12: rgba(0,191,166,0.12);
+      }
+    ]]></style>
+
+    <!-- Paw icon (group) -->
+    <g id="icon-paw">
+      <!-- pad -->
+      <circle cx="0" cy="6" r="10" fill="var(--bb-teal-20)"/>
+      <!-- toes -->
+      <circle cx="-10" cy="-4" r="5" fill="var(--bb-teal-12)"/>
+      <circle cx="10"  cy="-4" r="5" fill="var(--bb-teal-12)"/>
+      <circle cx="-3"  cy="-10" r="5" fill="var(--bb-teal-12)"/>
+      <circle cx="3"   cy="-10" r="5" fill="var(--bb-teal-12)"/>
+    </g>
+
+    <!-- Bone icon -->
+    <g id="icon-bone" fill="var(--bb-teal-12)">
+      <path d="M-40,-6
+               c-6,-10 -24,-10 -30,0
+               c-10,6 -10,24 0,30
+               c6,10 24,10 30,0
+               l20,0
+               c6,10 24,10 30,0
+               c10,-6 10,-24 0,-30
+               c-6,-10 -24,-10 -30,0
+               z"/>
+    </g>
+
+    <!-- Seamless pattern tile 200x200 -->
+    <pattern id="bb-pattern" patternUnits="userSpaceOnUse" width="200" height="200">
+      <!-- base -->
+      <rect width="200" height="200" fill="var(--bb-bg)"/>
+      <!-- scatter paws and bones -->
+      <use href="#icon-paw" x="40"  y="50"  transform="rotate(-10 40 50)"/>
+      <use href="#icon-paw" x="150" y="80"  transform="rotate(20 150 80) scale(0.9)"/>
+      <use href="#icon-paw" x="90"  y="150" transform="rotate(-35 90 150) scale(1.1)"/>
+
+      <use href="#icon-bone" x="60"  y="120" transform="rotate(25 60 120) scale(0.8)"/>
+      <use href="#icon-bone" x="160" y="30"  transform="rotate(-15 160 30) scale(0.7)"/>
+      <use href="#icon-bone" x="120" y="170" transform="rotate(8 120 170) scale(0.9)"/>
+    </pattern>
+  </defs>
+
+  <!-- Fill the whole artboard with the seamless pattern -->
+  <rect x="0" y="0" width="100%" height="100%" fill="url(#bb-pattern)"/>
+</svg>
+
