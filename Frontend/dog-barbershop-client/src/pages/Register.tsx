@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Header } from '../components/Header';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { Card } from '../components/Card';
 
 export const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -20,95 +24,116 @@ export const Register: React.FC = () => {
       await register(username, password, firstName);
       navigate('/appointments');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
+      setError(err.response?.data?.message || 'הרישום נכשל');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Create your account
-          </h2>
-        </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50">
+      <Header />
+      <div className="flex items-center justify-center min-h-[calc(100vh-5rem)] py-12 px-4 sm:px-6 lg:px-8">
+        <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div className="hidden lg:block">
+            <div className="relative">
+              <div className="absolute -top-4 -right-4 w-16 h-16 bg-amber-700 rounded-full opacity-20 animate-pulse"></div>
+              <div className="absolute -bottom-4 -left-4 w-12 h-12 bg-amber-600 rounded-full opacity-30 animate-pulse delay-75"></div>
+              <div className="w-full max-w-md mx-auto flex items-center justify-center">
+                <svg className="w-full h-full text-amber-800" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="150" cy="150" r="120" fill="#FEEFAD" stroke="#4A3F35" strokeWidth="4"/>
+                  <circle cx="120" cy="120" r="12" fill="#4A3F35"/>
+                  <circle cx="180" cy="120" r="12" fill="#4A3F35"/>
+                  <path d="M 105 165 Q 150 185 195 165" stroke="#4A3F35" strokeWidth="6" strokeLinecap="round" fill="none"/>
+                  <ellipse cx="150" cy="210" rx="45" ry="30" fill="#4A3F35"/>
+                  <path d="M 75 90 Q 45 75 30 105" stroke="#4A3F35" strokeWidth="6" strokeLinecap="round" fill="none"/>
+                  <path d="M 225 90 Q 255 75 270 105" stroke="#4A3F35" strokeWidth="6" strokeLinecap="round" fill="none"/>
+                  <path d="M 150 75 Q 135 45 150 30" stroke="#4A3F35" strokeWidth="4" strokeLinecap="round" fill="none"/>
+                  <circle cx="127" cy="68" r="4" fill="#4A3F35"/>
+                  <circle cx="173" cy="68" r="4" fill="#4A3F35"/>
+                </svg>
+              </div>
             </div>
-          )}
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-                First Name
-              </label>
-              <input
-                id="firstName"
-                name="firstName"
+          </div>
+
+          <Card className="w-full p-8 lg:p-10 shadow-2xl">
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-bold text-amber-900 mb-3">
+                צור חשבון
+              </h2>
+              <p className="text-lg text-amber-800">הצטרף אלינו וקבע תור לתספורת הכלב שלך</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                  <p className="text-sm font-medium">{error}</p>
+                </div>
+              )}
+
+              <Input
+                label="שם פרטי"
                 type="text"
-                required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="First Name"
+                placeholder="הכנס את השם הפרטי שלך"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700">
-                Username
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Username"
+                autoFocus
+              />
+
+              <Input
+                label="שם משתמש"
+                type="text"
+                placeholder="בחר שם משתמש"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
                 required
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Password"
+              />
+
+              <Input
+                label="סיסמה"
+                type="password"
+                placeholder="צור סיסמה"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
               />
-            </div>
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
-            >
-              {loading ? 'Registering...' : 'Register'}
-            </button>
-          </div>
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                disabled={loading}
+                className="w-full mt-6 bg-amber-100 text-amber-900 hover:bg-amber-200 border-0 shadow-lg"
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-amber-900" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    יוצר חשבון...
+                  </span>
+                ) : (
+                  'צור חשבון'
+                )}
+              </Button>
 
-          <div className="text-center">
-            <Link
-              to="/login"
-              className="text-indigo-600 hover:text-indigo-500 text-sm"
-            >
-              Already have an account? Sign in here
-            </Link>
-          </div>
-        </form>
+              <div className="text-center pt-6 border-t border-amber-200">
+                <p className="text-sm text-amber-800">
+                  כבר יש לך חשבון?{' '}
+                  <Link
+                    to="/login"
+                    className="font-semibold text-amber-900 hover:text-amber-700 transition-colors underline"
+                  >
+                    התחבר כאן
+                  </Link>
+                </p>
+              </div>
+            </form>
+          </Card>
+        </div>
       </div>
     </div>
   );
 };
-

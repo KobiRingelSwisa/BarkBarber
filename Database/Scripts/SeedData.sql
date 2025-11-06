@@ -7,24 +7,25 @@ USE DogBarbershopDB;
 GO
 
 -- Insert appointment types if they don't exist
-IF NOT EXISTS (SELECT * FROM AppointmentTypes WHERE Name = 'כלב קטן')
+-- Note: Using N prefix for Unicode strings (Hebrew text)
+IF NOT EXISTS (SELECT * FROM AppointmentTypes WHERE Name = N'כלב קטן')
 BEGIN
     INSERT INTO AppointmentTypes (Name, DurationMinutes, Price)
-    VALUES ('כלב קטן', 30, 100.00);
+    VALUES (N'כלב קטן', 30, 100.00);
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM AppointmentTypes WHERE Name = 'כלב בינוני')
+IF NOT EXISTS (SELECT * FROM AppointmentTypes WHERE Name = N'כלב בינוני')
 BEGIN
     INSERT INTO AppointmentTypes (Name, DurationMinutes, Price)
-    VALUES ('כלב בינוני', 45, 150.00);
+    VALUES (N'כלב בינוני', 45, 150.00);
 END
 GO
 
-IF NOT EXISTS (SELECT * FROM AppointmentTypes WHERE Name = 'כלב גדול')
+IF NOT EXISTS (SELECT * FROM AppointmentTypes WHERE Name = N'כלב גדול')
 BEGIN
     INSERT INTO AppointmentTypes (Name, DurationMinutes, Price)
-    VALUES ('כלב גדול', 60, 200.00);
+    VALUES (N'כלב גדול', 60, 200.00);
 END
 GO
 

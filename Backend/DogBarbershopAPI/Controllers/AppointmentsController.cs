@@ -29,8 +29,9 @@ public class AppointmentsController : ControllerBase
         [FromQuery] DateTime? date,
         [FromQuery] string? customerName)
     {
-        var userId = GetCurrentUserId();
-        var appointments = await _appointmentService.GetAppointmentsAsync(userId, date, customerName);
+        // Return all appointments (not filtered by user) - as per requirements
+        // Passing null as userId to get all appointments regardless of user
+        var appointments = await _appointmentService.GetAppointmentsAsync(null, date, customerName);
         return Ok(appointments);
     }
 
@@ -122,20 +123,46 @@ public class AppointmentsController : ControllerBase
     {
         var userId = GetCurrentUserId();
 
-        var canDelete = await _appointmentService.CanUserDeleteAppointmentAsync(id, userId);
-        if (!canDelete)
+        var appointment = await _appointmentService.GetAppointmentByIdAsync(id, userId);
+        if (appointment == null)
         {
-            return BadRequest("You can only delete your own appointments, and not appointments scheduled for today.");
+            return NotFound(new { message = "התור לא נמצא." });
+        }
+
+        // Check if user owns the appointment
+        if (appointment.UserId != userId)
+        {
+            return BadRequest(new { message = "ניתן למחוק רק את התורים שלך." });
         }
 
         var deleted = await _appointmentService.DeleteAppointmentAsync(id, userId);
 
         if (!deleted)
         {
-            return NotFound("Appointment not found.");
+            return BadRequest(new { message = "מחיקת התור נכשלה." });
         }
 
         return NoContent();
+    }
+
+    [HttpPatch("{id}/status")]
+    public async Task<ActionResult<AppointmentResponse>> UpdateAppointmentStatus(int id, [FromBody] UpdateStatusRequest request)
+    {
+        var userId = GetCurrentUserId();
+
+        if (string.IsNullOrWhiteSpace(request.Status))
+        {
+            return BadRequest("Status is required.");
+        }
+
+        var appointment = await _appointmentService.UpdateAppointmentStatusAsync(id, userId, request.Status);
+
+        if (appointment == null)
+        {
+            return NotFound("Appointment not found or you don't have permission to update it.");
+        }
+
+        return Ok(appointment);
     }
 }
 

@@ -33,8 +33,11 @@ public class AppointmentService : IAppointmentService
             return null;
         }
 
+        // Calculate discount BEFORE creating the appointment
+        // This ensures we count only completed appointments that existed before this one
+        var createdAt = DateTime.UtcNow;
         var basePrice = appointmentType.Price;
-        var discountAmount = await CalculateDiscountAsync(userId, request.AppointmentTypeId);
+        var discountAmount = await CalculateDiscountAsync(userId, request.AppointmentTypeId, createdAt);
         var finalPrice = basePrice - discountAmount;
 
         var appointment = new Appointment
@@ -43,11 +46,17 @@ public class AppointmentService : IAppointmentService
             AppointmentTypeId = request.AppointmentTypeId,
             ScheduledDate = request.ScheduledDate,
             Status = "Pending",
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = createdAt,
+            BasePrice = basePrice,
+            DiscountAmount = discountAmount,
+            FinalPrice = finalPrice
         };
 
         _context.Appointments.Add(appointment);
         await _context.SaveChangesAsync();
+        
+        // After saving, update CreatedAt to the actual database time if needed
+        // This ensures consistency with the stored procedure calculation
 
         var user = await _context.Users.FindAsync(userId);
 
@@ -60,9 +69,9 @@ public class AppointmentService : IAppointmentService
             AppointmentTypeId = appointment.AppointmentTypeId,
             AppointmentTypeName = appointmentType.Name,
             DurationMinutes = appointmentType.DurationMinutes,
-            BasePrice = basePrice,
-            DiscountAmount = discountAmount,
-            FinalPrice = finalPrice,
+            BasePrice = appointment.BasePrice,
+            DiscountAmount = appointment.DiscountAmount,
+            FinalPrice = appointment.FinalPrice,
             ScheduledDate = appointment.ScheduledDate,
             Status = appointment.Status,
             CreatedAt = appointment.CreatedAt
@@ -81,22 +90,27 @@ public class AppointmentService : IAppointmentService
             return null;
         }
 
-        var basePrice = appointment.AppointmentType.Price;
-        var discountAmount = await CalculateDiscountAsync(userId, appointment.AppointmentTypeId);
-        var finalPrice = basePrice - discountAmount;
+        // Ensure AppointmentType is loaded
+        if (appointment.AppointmentType == null)
+        {
+            await _context.Entry(appointment)
+                .Reference(a => a.AppointmentType)
+                .LoadAsync();
+        }
 
+        // Use stored prices instead of recalculating to prevent retroactive changes
         return new AppointmentResponse
         {
             Id = appointment.Id,
             UserId = appointment.UserId,
-            Username = appointment.User.Username,
-            FirstName = appointment.User.FirstName,
+            Username = appointment.User?.Username ?? string.Empty,
+            FirstName = appointment.User?.FirstName ?? string.Empty,
             AppointmentTypeId = appointment.AppointmentTypeId,
-            AppointmentTypeName = appointment.AppointmentType.Name,
-            DurationMinutes = appointment.AppointmentType.DurationMinutes,
-            BasePrice = basePrice,
-            DiscountAmount = discountAmount,
-            FinalPrice = finalPrice,
+            AppointmentTypeName = appointment.AppointmentType?.Name ?? "לא זמין",
+            DurationMinutes = appointment.AppointmentType?.DurationMinutes ?? 0,
+            BasePrice = appointment.BasePrice,
+            DiscountAmount = appointment.DiscountAmount,
+            FinalPrice = appointment.FinalPrice,
             ScheduledDate = appointment.ScheduledDate,
             Status = appointment.Status,
             CreatedAt = appointment.CreatedAt
@@ -115,26 +129,31 @@ public class AppointmentService : IAppointmentService
             return null;
         }
 
-        var basePrice = appointment.AppointmentType.Price;
-        var discountAmount = await CalculateDiscountAsync(userId, appointment.AppointmentTypeId);
-        var finalPrice = basePrice - discountAmount;
+        // Ensure AppointmentType is loaded
+        if (appointment.AppointmentType == null)
+        {
+            await _context.Entry(appointment)
+                .Reference(a => a.AppointmentType)
+                .LoadAsync();
+        }
 
+        // Use stored prices instead of recalculating to prevent retroactive changes
         return new AppointmentDetailResponse
         {
             Id = appointment.Id,
             UserId = appointment.UserId,
-            Username = appointment.User.Username,
-            FirstName = appointment.User.FirstName,
+            Username = appointment.User?.Username ?? string.Empty,
+            FirstName = appointment.User?.FirstName ?? string.Empty,
             AppointmentTypeId = appointment.AppointmentTypeId,
-            AppointmentTypeName = appointment.AppointmentType.Name,
-            DurationMinutes = appointment.AppointmentType.DurationMinutes,
-            BasePrice = basePrice,
-            DiscountAmount = discountAmount,
-            FinalPrice = finalPrice,
+            AppointmentTypeName = appointment.AppointmentType?.Name ?? "לא זמין",
+            DurationMinutes = appointment.AppointmentType?.DurationMinutes ?? 0,
+            BasePrice = appointment.BasePrice,
+            DiscountAmount = appointment.DiscountAmount,
+            FinalPrice = appointment.FinalPrice,
             ScheduledDate = appointment.ScheduledDate,
             Status = appointment.Status,
             CreatedAt = appointment.CreatedAt,
-            UserCreatedAt = appointment.User.CreatedAt
+            UserCreatedAt = appointment.User?.CreatedAt ?? DateTime.UtcNow
         };
     }
 
@@ -169,22 +188,27 @@ public class AppointmentService : IAppointmentService
 
         foreach (var appointment in appointments)
         {
-            var basePrice = appointment.AppointmentType.Price;
-            var discountAmount = await CalculateDiscountAsync(appointment.UserId, appointment.AppointmentTypeId);
-            var finalPrice = basePrice - discountAmount;
+            // Ensure AppointmentType is loaded
+            if (appointment.AppointmentType == null)
+            {
+                await _context.Entry(appointment)
+                    .Reference(a => a.AppointmentType)
+                    .LoadAsync();
+            }
 
+            // Use stored prices instead of recalculating to prevent retroactive changes
             result.Add(new AppointmentResponse
             {
                 Id = appointment.Id,
                 UserId = appointment.UserId,
-                Username = appointment.User.Username,
-                FirstName = appointment.User.FirstName,
+                Username = appointment.User?.Username ?? string.Empty,
+                FirstName = appointment.User?.FirstName ?? string.Empty,
                 AppointmentTypeId = appointment.AppointmentTypeId,
-                AppointmentTypeName = appointment.AppointmentType.Name,
-                DurationMinutes = appointment.AppointmentType.DurationMinutes,
-                BasePrice = basePrice,
-                DiscountAmount = discountAmount,
-                FinalPrice = finalPrice,
+                AppointmentTypeName = appointment.AppointmentType?.Name ?? "לא זמין",
+                DurationMinutes = appointment.AppointmentType?.DurationMinutes ?? 0,
+                BasePrice = appointment.BasePrice,
+                DiscountAmount = appointment.DiscountAmount,
+                FinalPrice = appointment.FinalPrice,
                 ScheduledDate = appointment.ScheduledDate,
                 Status = appointment.Status,
                 CreatedAt = appointment.CreatedAt
@@ -224,27 +248,34 @@ public class AppointmentService : IAppointmentService
             return null;
         }
 
+        // Recalculate price when updating appointment (in case type changed)
+        // Use the original CreatedAt to prevent retroactive discount changes
+        var basePrice = appointmentType.Price;
+        var discountAmount = await CalculateDiscountAsync(userId, request.AppointmentTypeId, appointment.CreatedAt);
+        var finalPrice = basePrice - discountAmount;
+
         appointment.AppointmentTypeId = request.AppointmentTypeId;
         appointment.ScheduledDate = request.ScheduledDate;
+        appointment.BasePrice = basePrice;
+        appointment.DiscountAmount = discountAmount;
+        appointment.FinalPrice = finalPrice;
 
         await _context.SaveChangesAsync();
 
-        var basePrice = appointmentType.Price;
-        var discountAmount = await CalculateDiscountAsync(userId, request.AppointmentTypeId);
-        var finalPrice = basePrice - discountAmount;
+        var user = await _context.Users.FindAsync(userId);
 
         return new AppointmentResponse
         {
             Id = appointment.Id,
             UserId = appointment.UserId,
-            Username = appointment.User.Username,
-            FirstName = appointment.User.FirstName,
+            Username = user?.Username ?? appointment.User.Username,
+            FirstName = user?.FirstName ?? appointment.User.FirstName,
             AppointmentTypeId = appointment.AppointmentTypeId,
             AppointmentTypeName = appointmentType.Name,
             DurationMinutes = appointmentType.DurationMinutes,
-            BasePrice = basePrice,
-            DiscountAmount = discountAmount,
-            FinalPrice = finalPrice,
+            BasePrice = appointment.BasePrice,
+            DiscountAmount = appointment.DiscountAmount,
+            FinalPrice = appointment.FinalPrice,
             ScheduledDate = appointment.ScheduledDate,
             Status = appointment.Status,
             CreatedAt = appointment.CreatedAt
@@ -262,12 +293,6 @@ public class AppointmentService : IAppointmentService
         }
 
         if (appointment.UserId != userId)
-        {
-            return false;
-        }
-
-        var today = DateTime.UtcNow.Date;
-        if (appointment.ScheduledDate.Date == today)
         {
             return false;
         }
@@ -291,37 +316,94 @@ public class AppointmentService : IAppointmentService
         var appointment = await _context.Appointments
             .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
-        if (appointment == null || appointment.UserId != userId)
-        {
-            return false;
-        }
-
-        var today = DateTime.UtcNow.Date;
-        return appointment.ScheduledDate.Date != today;
+        return appointment != null && appointment.UserId == userId;
     }
 
-    private async Task<decimal> CalculateDiscountAsync(int userId, int appointmentTypeId)
+    public async Task<AppointmentResponse?> UpdateAppointmentStatusAsync(int appointmentId, int userId, string status)
     {
-        var connectionString = _configuration.GetConnectionString("DefaultConnection");
+        var appointment = await _context.Appointments
+            .Include(a => a.User)
+            .Include(a => a.AppointmentType)
+            .FirstOrDefaultAsync(a => a.Id == appointmentId);
 
-        using var connection = new SqlConnection(connectionString);
-        await connection.OpenAsync();
-
-        using var command = new SqlCommand("sp_CalculateAppointmentPrice", connection)
+        if (appointment == null)
         {
-            CommandType = System.Data.CommandType.StoredProcedure
+            return null;
+        }
+
+        // Allow any authenticated user to update status (for marking appointments as completed)
+        // Only the owner can cancel their own appointment
+        if (status == "Cancelled" && appointment.UserId != userId)
+        {
+            return null;
+        }
+
+        if (status != "Pending" && status != "Completed" && status != "Cancelled")
+        {
+            return null;
+        }
+
+        appointment.Status = status;
+        await _context.SaveChangesAsync();
+
+        // Ensure AppointmentType is loaded
+        if (appointment.AppointmentType == null)
+        {
+            await _context.Entry(appointment)
+                .Reference(a => a.AppointmentType)
+                .LoadAsync();
+        }
+
+        // Use stored prices instead of recalculating to prevent retroactive changes
+        return new AppointmentResponse
+        {
+            Id = appointment.Id,
+            UserId = appointment.UserId,
+            Username = appointment.User?.Username ?? string.Empty,
+            FirstName = appointment.User?.FirstName ?? string.Empty,
+            AppointmentTypeId = appointment.AppointmentTypeId,
+            AppointmentTypeName = appointment.AppointmentType?.Name ?? "לא זמין",
+            DurationMinutes = appointment.AppointmentType?.DurationMinutes ?? 0,
+            BasePrice = appointment.BasePrice,
+            DiscountAmount = appointment.DiscountAmount,
+            FinalPrice = appointment.FinalPrice,
+            ScheduledDate = appointment.ScheduledDate,
+            Status = appointment.Status,
+            CreatedAt = appointment.CreatedAt
         };
+    }
 
-        command.Parameters.AddWithValue("@UserId", userId);
-        command.Parameters.AddWithValue("@AppointmentTypeId", appointmentTypeId);
-        command.Parameters.Add("@BasePrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
-        command.Parameters.Add("@DiscountAmount", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
-        command.Parameters.Add("@FinalPrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
+    private async Task<decimal> CalculateDiscountAsync(int userId, int appointmentTypeId, DateTime createdAt)
+    {
+        try
+        {
+            var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
-        await command.ExecuteNonQueryAsync();
+            using var connection = new SqlConnection(connectionString);
+            await connection.OpenAsync();
 
-        var discountAmount = (decimal)command.Parameters["@DiscountAmount"].Value;
-        return discountAmount;
+            using var command = new SqlCommand("sp_CalculateAppointmentPrice", connection)
+            {
+                CommandType = System.Data.CommandType.StoredProcedure
+            };
+
+            command.Parameters.AddWithValue("@UserId", userId);
+            command.Parameters.AddWithValue("@AppointmentTypeId", appointmentTypeId);
+            command.Parameters.AddWithValue("@CreatedAt", createdAt);
+            command.Parameters.Add("@BasePrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
+            command.Parameters.Add("@DiscountAmount", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
+            command.Parameters.Add("@FinalPrice", System.Data.SqlDbType.Decimal).Direction = System.Data.ParameterDirection.Output;
+
+            await command.ExecuteNonQueryAsync();
+
+            var discountAmount = (decimal)command.Parameters["@DiscountAmount"].Value;
+            return discountAmount;
+        }
+        catch (SqlException ex)
+        {
+            // Log the error for debugging
+            throw new InvalidOperationException($"Error calculating discount: {ex.Message}. Make sure the stored procedure sp_CalculateAppointmentPrice is updated in the database.", ex);
+        }
     }
 }
 

@@ -48,6 +48,11 @@ public class DogBarbershopDbContext : DbContext
             entity.Property(e => e.ScheduledDate).IsRequired();
             entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
             entity.Property(e => e.CreatedAt).IsRequired();
+            
+            // Price fields - stored at appointment creation to prevent retroactive changes
+            entity.Property(e => e.BasePrice).IsRequired().HasColumnType("decimal(10,2)");
+            entity.Property(e => e.DiscountAmount).IsRequired().HasColumnType("decimal(10,2)").HasDefaultValue(0);
+            entity.Property(e => e.FinalPrice).IsRequired().HasColumnType("decimal(10,2)");
 
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Appointments)

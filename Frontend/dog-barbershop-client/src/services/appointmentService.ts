@@ -41,6 +41,11 @@ export const appointmentService = {
     await api.delete(`/appointments/${id}`);
   },
 
+  async updateAppointmentStatus(id: number, status: string): Promise<Appointment> {
+    const response = await api.patch<Appointment>(`/appointments/${id}/status`, { status });
+    return response.data;
+  },
+
   async getAppointmentTypes(): Promise<AppointmentType[]> {
     const response = await api.get<AppointmentType[]>('/appointmenttypes');
     return response.data;

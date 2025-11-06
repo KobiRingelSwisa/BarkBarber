@@ -10,6 +10,7 @@ public interface IAppointmentService
     Task<List<AppointmentResponse>> GetAppointmentsAsync(int? userId = null, DateTime? date = null, string? customerName = null);
     Task<AppointmentResponse?> UpdateAppointmentAsync(int appointmentId, int userId, UpdateAppointmentRequest request);
     Task<bool> DeleteAppointmentAsync(int appointmentId, int userId);
+    Task<AppointmentResponse?> UpdateAppointmentStatusAsync(int appointmentId, int userId, string status);
     Task<bool> CanUserModifyAppointmentAsync(int appointmentId, int userId);
     Task<bool> CanUserDeleteAppointmentAsync(int appointmentId, int userId);
 }
