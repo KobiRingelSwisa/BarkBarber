@@ -23,7 +23,7 @@ export const Register: React.FC = () => {
 
     try {
       await register(username, password, firstName);
-      navigate('/appointments');
+      navigate('/login');
     } catch (err: any) {
       setError(err.response?.data?.message || 'הרישום נכשל');
     } finally {

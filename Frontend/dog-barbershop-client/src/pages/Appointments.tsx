@@ -6,7 +6,6 @@ import { Header } from "../components/Header";
 import { Button } from "../components/Button";
 import { Card } from "../components/Card";
 import { Input } from "../components/Input";
-import { Badge } from "../components/Badge";
 import { PawsBackground } from "../components/PawsBackground";
 import type {
   Appointment,
@@ -35,6 +34,8 @@ export const Appointments: React.FC = () => {
   const [formData, setFormData] = useState({
     appointmentTypeId: 0,
     scheduledDate: "",
+    selectedDate: "",
+    selectedTime: "",
   });
 
   useEffect(() => {
@@ -75,25 +76,35 @@ export const Appointments: React.FC = () => {
     setFormData({
       appointmentTypeId: appointmentTypes[0]?.id || 0,
       scheduledDate: "",
+      selectedDate: "",
+      selectedTime: "",
     });
     setShowForm(true);
   };
 
-  const formatDateForInput = (isoDateString: string): string => {
+  const formatDateForInput = (
+    isoDateString: string
+  ): { date: string; time: string } => {
     const date = new Date(isoDateString);
     const year = date.getUTCFullYear();
     const month = String(date.getUTCMonth() + 1).padStart(2, "0");
     const day = String(date.getUTCDate()).padStart(2, "0");
     const hours = String(date.getUTCHours()).padStart(2, "0");
     const minutes = String(date.getUTCMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return {
+      date: `${year}-${month}-${day}`,
+      time: `${hours}:${minutes}`,
+    };
   };
 
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment);
+    const { date, time } = formatDateForInput(appointment.scheduledDate);
     setFormData({
       appointmentTypeId: appointment.appointmentTypeId,
-      scheduledDate: formatDateForInput(appointment.scheduledDate),
+      scheduledDate: appointment.scheduledDate,
+      selectedDate: date,
+      selectedTime: time,
     });
     setShowForm(true);
   };
@@ -144,7 +155,9 @@ export const Appointments: React.FC = () => {
     setError("");
 
     try {
-      const isoDate = convertLocalDateTimeToISO(formData.scheduledDate);
+      // Combine date and time
+      const combinedDateTime = `${formData.selectedDate}T${formData.selectedTime}`;
+      const isoDate = convertLocalDateTimeToISO(combinedDateTime);
 
       if (editingAppointment) {
         const updateData: UpdateAppointmentRequest = {
@@ -318,6 +331,7 @@ export const Appointments: React.FC = () => {
                   <h2 className="text-xl font-bold text-gray-900">
                     רשימת תורים
                   </h2>
+
                   {appointments.length > 0 && (
                     <span className="px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
                       {appointments.length}
@@ -325,6 +339,9 @@ export const Appointments: React.FC = () => {
                   )}
                 </div>
               </div>
+              <p className="text-sm text-gray-600 mt-0 mb-4">
+                לקבלת פרטים נוספים, לחץ על הרשומה הרצויה.
+              </p>
 
               {loading ? (
                 <div className="flex items-center justify-center py-20">
@@ -364,228 +381,556 @@ export const Appointments: React.FC = () => {
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {appointments.map((appointment) => {
-                    const isSameDay = (() => {
-                      const appointmentDate = new Date(
-                        appointment.scheduledDate
-                      );
-                      const today = new Date();
-                      const appointmentDateOnly = new Date(
-                        appointmentDate.getFullYear(),
-                        appointmentDate.getMonth(),
-                        appointmentDate.getDate()
-                      );
-                      const todayDateOnly = new Date(
-                        today.getFullYear(),
-                        today.getMonth(),
-                        today.getDate()
-                      );
+                <>
+                  {/* Future Appointments */}
+                  {(() => {
+                    const now = new Date();
+                    const futureAppointments = appointments.filter(
+                      (app) => new Date(app.scheduledDate) >= now
+                    );
+
+                    if (futureAppointments.length > 0) {
                       return (
-                        appointmentDateOnly.getTime() ===
-                        todayDateOnly.getTime()
-                      );
-                    })();
+                        <div className="mb-8">
+                          <div className="flex items-center gap-2 mb-4">
+                            <svg
+                              className="w-5 h-5 text-emerald-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <h3 className="text-lg font-bold text-gray-900">
+                              תורים עתידיים
+                            </h3>
+                            <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
+                              {futureAppointments.length}
+                            </span>
+                          </div>
+                          <div className="space-y-4">
+                            {futureAppointments.map((appointment) => {
+                              const isSameDay = (() => {
+                                const appointmentDate = new Date(
+                                  appointment.scheduledDate
+                                );
+                                const today = new Date();
+                                const appointmentDateOnly = new Date(
+                                  appointmentDate.getFullYear(),
+                                  appointmentDate.getMonth(),
+                                  appointmentDate.getDate()
+                                );
+                                const todayDateOnly = new Date(
+                                  today.getFullYear(),
+                                  today.getMonth(),
+                                  today.getDate()
+                                );
+                                return (
+                                  appointmentDateOnly.getTime() ===
+                                  todayDateOnly.getTime()
+                                );
+                              })();
 
-                    return (
-                      <div
-                        key={appointment.id}
-                        className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
-                        onClick={() => handleAppointmentClick(appointment.id)}
-                      >
-                        <div className="p-6">
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-                            {/* Left Section - Customer Info */}
-                            <div className="flex items-start gap-4 flex-1 min-w-0">
-                              <div className="flex-shrink-0">
-                                <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-md">
-                                  <span className="text-white font-bold text-xl">
-                                    {appointment.firstName
-                                      .charAt(0)
-                                      .toUpperCase()}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 mb-2">
-                                  <h3 className="text-lg font-bold text-gray-900 truncate">
-                                    {appointment.firstName}
-                                  </h3>
-                                  <span
-                                    className={`mt-2 sm:mt-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${getStatusColor(
-                                      appointment.status
-                                    )}`}
-                                  >
-                                    {appointment.status}
-                                  </span>
-                                </div>
-                                <p className="text-sm text-gray-500 mb-4 break-all">
-                                  @{appointment.username}
-                                </p>
+                              return (
+                                <div
+                                  key={appointment.id}
+                                  className="group bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
+                                  onClick={() =>
+                                    handleAppointmentClick(appointment.id)
+                                  }
+                                >
+                                  <div className="p-6">
+                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                                      {/* Left Section - Customer Info */}
+                                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                                        <div className="flex-shrink-0">
+                                          <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center shadow-md">
+                                            <span className="text-white font-bold text-xl">
+                                              {appointment.firstName
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 mb-2">
+                                            <h3 className="text-lg font-bold text-gray-900 truncate">
+                                              {appointment.firstName}
+                                            </h3>
+                                            <span
+                                              className={`mt-2 sm:mt-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${getStatusColor(
+                                                appointment.status
+                                              )}`}
+                                            >
+                                              {appointment.status}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-gray-500 mb-4 break-all">
+                                            @{appointment.username}
+                                          </p>
 
-                                {/* Info Grid */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                                  <div className="flex items-start gap-2 text-sm">
-                                    <svg
-                                      className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                                      />
-                                    </svg>
-                                    <span className="text-gray-600">
-                                      {appointment.appointmentTypeName ||
-                                        "לא זמין"}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-start gap-2 text-sm">
-                                    <svg
-                                      className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                                      />
-                                    </svg>
-                                    <span className="text-gray-600">
-                                      {formatDate(appointment.scheduledDate)}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-start gap-2 text-sm">
-                                    <svg
-                                      className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                      />
-                                    </svg>
-                                    <span className="text-gray-900 font-semibold whitespace-nowrap">
-                                      {appointment.discountAmount > 0 && (
-                                        <span className="text-gray-400 line-through mr-2 text-xs">
-                                          ₪{appointment.basePrice.toFixed(2)}
-                                        </span>
-                                      )}
-                                      ₪{appointment.finalPrice.toFixed(2)}
-                                    </span>
+                                          {/* Info Grid */}
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                                            <div className="flex items-start gap-2 text-sm">
+                                              <svg
+                                                className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                                />
+                                              </svg>
+                                              <span className="text-gray-600">
+                                                {appointment.appointmentTypeName ||
+                                                  "לא זמין"}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-start gap-2 text-sm">
+                                              <svg
+                                                className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                              </svg>
+                                              <span className="text-gray-600">
+                                                {formatDate(
+                                                  appointment.scheduledDate
+                                                )}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-start gap-2 text-sm">
+                                              <svg
+                                                className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                              </svg>
+                                              <span className="text-gray-900 font-semibold whitespace-nowrap">
+                                                {appointment.discountAmount >
+                                                  0 && (
+                                                  <span className="text-gray-400 line-through mr-2 text-xs">
+                                                    ₪
+                                                    {appointment.basePrice.toFixed(
+                                                      2
+                                                    )}
+                                                  </span>
+                                                )}
+                                                ₪
+                                                {appointment.finalPrice.toFixed(
+                                                  2
+                                                )}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Right Section - Actions */}
+                                      {user &&
+                                        appointment.userId === user.id && (
+                                          <div
+                                            className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full lg:w-auto"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {appointment.status !==
+                                              "Completed" && (
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleEdit(appointment);
+                                                }}
+                                                className="w-full sm:flex-1 lg:w-auto border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400"
+                                              >
+                                                <svg
+                                                  className="w-4 h-4 ml-1"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                                  />
+                                                </svg>
+                                                ערוך
+                                              </Button>
+                                            )}
+                                {!isSameDay && new Date(appointment.scheduledDate) >= new Date() && (
+                                              <Button
+                                                variant="danger"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDelete(appointment.id);
+                                                }}
+                                                className="w-full sm:flex-1 lg:w-auto bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                                              >
+                                                <svg
+                                                  className="w-4 h-4 ml-1"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                  />
+                                                </svg>
+                                                מחק
+                                              </Button>
+                                            )}
+                                            {appointment.status === "Pending" &&
+                                              new Date(
+                                                appointment.scheduledDate
+                                              ) <= new Date() && (
+                                                <Button
+                                                  variant="primary"
+                                                  size="sm"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(
+                                                      appointment.id,
+                                                      "Completed"
+                                                    );
+                                                  }}
+                                                  className="w-full sm:flex-1 lg:w-auto bg-emerald-500 text-white hover:bg-emerald-600 border-0"
+                                                >
+                                                  <svg
+                                                    className="w-4 h-4 ml-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                  >
+                                                    <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M5 13l4 4L19 7"
+                                                    />
+                                                  </svg>
+                                                  הושלם
+                                                </Button>
+                                              )}
+                                          </div>
+                                        )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </div>
-
-                            {/* Right Section - Actions */}
-                            {user && appointment.userId === user.id && (
-                              <div
-                                className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full lg:w-auto"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {appointment.status !== "Completed" && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEdit(appointment);
-                                    }}
-                                    className="w-full sm:flex-1 lg:w-auto border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400"
-                                  >
-                                    <svg
-                                      className="w-4 h-4 ml-1"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                      />
-                                    </svg>
-                                    ערוך
-                                  </Button>
-                                )}
-                                {!isSameDay && (
-                                  <Button
-                                    variant="danger"
-                                    size="sm"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDelete(appointment.id);
-                                    }}
-                                    className="w-full sm:flex-1 lg:w-auto bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
-                                  >
-                                    <svg
-                                      className="w-4 h-4 ml-1"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                      />
-                                    </svg>
-                                    מחק
-                                  </Button>
-                                )}
-                                {appointment.status === "Pending" &&
-                                  new Date(appointment.scheduledDate) <=
-                                    new Date() && (
-                                    <Button
-                                      variant="primary"
-                                      size="sm"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleStatusChange(
-                                          appointment.id,
-                                          "Completed"
-                                        );
-                                      }}
-                                      className="w-full sm:flex-1 lg:w-auto bg-emerald-500 text-white hover:bg-emerald-600 border-0"
-                                    >
-                                      <svg
-                                        className="w-4 h-4 ml-1"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                      הושלם
-                                    </Button>
-                                  )}
-                              </div>
-                            )}
+                              );
+                            })}
                           </div>
                         </div>
-                      </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* Past Appointments */}
+                  {(() => {
+                    const now = new Date();
+                    const pastAppointments = appointments.filter(
+                      (app) => new Date(app.scheduledDate) < now
                     );
-                  })}
-                </div>
+
+                    if (pastAppointments.length > 0) {
+                      return (
+                        <div>
+                          <div className="flex items-center gap-2 mb-4 pt-6 border-t border-gray-200">
+                            <svg
+                              className="w-5 h-5 text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <h3 className="text-lg font-bold text-gray-900">
+                              תורים היסטוריים
+                            </h3>
+                            <span className="px-2 py-1 bg-gray-200 text-gray-700 rounded-full text-xs font-medium">
+                              {pastAppointments.length}
+                            </span>
+                          </div>
+                          <div className="space-y-4">
+                            {pastAppointments.map((appointment) => {
+                              const isSameDay = (() => {
+                                const appointmentDate = new Date(
+                                  appointment.scheduledDate
+                                );
+                                const today = new Date();
+                                const appointmentDateOnly = new Date(
+                                  appointmentDate.getFullYear(),
+                                  appointmentDate.getMonth(),
+                                  appointmentDate.getDate()
+                                );
+                                const todayDateOnly = new Date(
+                                  today.getFullYear(),
+                                  today.getMonth(),
+                                  today.getDate()
+                                );
+                                return (
+                                  appointmentDateOnly.getTime() ===
+                                  todayDateOnly.getTime()
+                                );
+                              })();
+
+                              return (
+                                <div
+                                  key={appointment.id}
+                                  className="group bg-white/60 rounded-xl border border-gray-300 shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden"
+                                  onClick={() =>
+                                    handleAppointmentClick(appointment.id)
+                                  }
+                                >
+                        <div className="p-6 opacity-75">
+                                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+                                      {/* Left Section - Customer Info */}
+                                      <div className="flex items-start gap-4 flex-1 min-w-0">
+                                        <div className="flex-shrink-0">
+                                          <div className="w-14 h-14 bg-gradient-to-br from-gray-300 to-gray-500 rounded-xl flex items-center justify-center shadow-md">
+                                            <span className="text-white font-bold text-xl">
+                                              {appointment.firstName
+                                                .charAt(0)
+                                                .toUpperCase()}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 mb-2">
+                                            <h3 className="text-lg font-bold text-gray-900 truncate">
+                                              {appointment.firstName}
+                                            </h3>
+                                            <span
+                                              className={`mt-2 sm:mt-0 px-3 py-1 rounded-full text-xs font-semibold border whitespace-nowrap ${getStatusColor(
+                                                appointment.status
+                                              )}`}
+                                            >
+                                              {appointment.status}
+                                            </span>
+                                          </div>
+                                          <p className="text-sm text-gray-500 mb-4 break-all">
+                                            @{appointment.username}
+                                          </p>
+
+                                          {/* Info Grid */}
+                                          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                                            <div className="flex items-start gap-2 text-sm">
+                                              <svg
+                                                className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                                />
+                                              </svg>
+                                              <span className="text-gray-600">
+                                                {appointment.appointmentTypeName ||
+                                                  "לא זמין"}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-start gap-2 text-sm">
+                                              <svg
+                                                className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                              </svg>
+                                              <span className="text-gray-600">
+                                                {formatDate(
+                                                  appointment.scheduledDate
+                                                )}
+                                              </span>
+                                            </div>
+                                            <div className="flex items-start gap-2 text-sm">
+                                              <svg
+                                                className="w-4 h-4 mt-1 text-gray-400 flex-shrink-0"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                              >
+                                                <path
+                                                  strokeLinecap="round"
+                                                  strokeLinejoin="round"
+                                                  strokeWidth={2}
+                                                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                                />
+                                              </svg>
+                                              <span className="text-gray-900 font-semibold whitespace-nowrap">
+                                                {appointment.discountAmount >
+                                                  0 && (
+                                                  <span className="text-gray-400 line-through mr-2 text-xs">
+                                                    ₪
+                                                    {appointment.basePrice.toFixed(
+                                                      2
+                                                    )}
+                                                  </span>
+                                                )}
+                                                ₪
+                                                {appointment.finalPrice.toFixed(
+                                                  2
+                                                )}
+                                              </span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Right Section - Actions */}
+                                      {user &&
+                                        appointment.userId === user.id && (
+                                          <div
+                                            className="flex flex-col sm:flex-row lg:flex-col gap-2 w-full sm:w-auto lg:w-auto flex-shrink-0"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            {appointment.status !==
+                                              "Completed" && (
+                                              <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleEdit(appointment);
+                                                }}
+                                                className="w-full sm:flex-1 lg:w-auto border-amber-300 text-amber-700 hover:bg-amber-50 hover:border-amber-400"
+                                              >
+                                                <svg
+                                                  className="w-4 h-4 ml-1"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                                  />
+                                                </svg>
+                                                ערוך
+                                              </Button>
+                                            )}
+                                            {!isSameDay &&
+                                              new Date(
+                                                appointment.scheduledDate
+                                              ) >= new Date() && (
+                                              <Button
+                                                variant="danger"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDelete(appointment.id);
+                                                }}
+                                                className="w-full sm:flex-1 lg:w-auto bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                                              >
+                                                <svg
+                                                  className="w-4 h-4 ml-1"
+                                                  fill="none"
+                                                  stroke="currentColor"
+                                                  viewBox="0 0 24 24"
+                                                >
+                                                  <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                                  />
+                                                </svg>
+                                                מחק
+                                              </Button>
+                                              )}
+                                            {appointment.status === "Pending" &&
+                                              new Date(
+                                                appointment.scheduledDate
+                                              ) <= new Date() && (
+                                                <Button
+                                                  variant="primary"
+                                                  size="sm"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusChange(
+                                                      appointment.id,
+                                                      "Completed"
+                                                    );
+                                                  }}
+                                                  className="w-full sm:flex-1 lg:w-auto bg-emerald-500 text-white hover:bg-emerald-600 border-0"
+                                                >
+                                                  <svg
+                                                    className="w-4 h-4 ml-1"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                  >
+                                                    <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M5 13l4 4L19 7"
+                                                    />
+                                                  </svg>
+                                                  הושלם
+                                                </Button>
+                                              )}
+                                          </div>
+                                        )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </>
               )}
             </Card>
           </div>
@@ -758,15 +1103,44 @@ export const Appointments: React.FC = () => {
                   ))}
                 </select>
               </div>
-              <Input
-                label="תאריך ושעה מתוכננים"
-                type="datetime-local"
-                value={formData.scheduledDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, scheduledDate: e.target.value })
-                }
-                required
-              />
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  תאריך
+                </label>
+                <Input
+                  type="date"
+                  value={formData.selectedDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, selectedDate: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  שעה
+                </label>
+                <select
+                  value={formData.selectedTime}
+                  onChange={(e) =>
+                    setFormData({ ...formData, selectedTime: e.target.value })
+                  }
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition-all text-gray-900 bg-white"
+                  required
+                >
+                  <option value="">בחר שעה</option>
+                  <option value="09:00">09:00</option>
+                  <option value="10:00">10:00</option>
+                  <option value="11:00">11:00</option>
+                  <option value="12:00">12:00</option>
+                  <option value="13:00">13:00</option>
+                  <option value="14:00">14:00</option>
+                  <option value="15:00">15:00</option>
+                  <option value="16:00">16:00</option>
+                  <option value="17:00">17:00</option>
+                  <option value="18:00">18:00</option>
+                </select>
+              </div>
               <div className="flex justify-end gap-3 pt-4">
                 <Button
                   type="button"
