@@ -100,11 +100,11 @@ export const AppointmentModal: React.FC<AppointmentModalProps> = ({ appointment,
             <div className="border-t border-amber-200 pt-6">
               <h3 className="text-xl font-bold text-amber-900 mb-4">פרטי זמן</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-amber-50 rounded-lg p-4">
+              <div className="bg-amber-50 rounded-lg p-4">
                   <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">זמן יצירת בקשת התור</label>
                   <p className="text-lg font-bold text-amber-900">{formatDate(appointment.createdAt)}</p>
-                </div>
-                <div className="bg-amber-50 rounded-lg p-4">
+              </div>
+              <div className="bg-amber-50 rounded-lg p-4">
                   <label className="block text-xs font-semibold text-amber-700 uppercase tracking-wide mb-2">תאריך ושעה מתוכננים</label>
                   <p className="text-lg font-bold text-amber-900">{formatDate(appointment.scheduledDate)}</p>
                 </div>
