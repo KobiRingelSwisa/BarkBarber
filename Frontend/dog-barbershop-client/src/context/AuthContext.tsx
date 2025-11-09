@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
 import { authService } from '../services/authService';
 import type { User, AuthResponse } from '../types';
 
@@ -8,18 +9,26 @@ interface AuthContextType {
   register: (username: string, password: string, firstName: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(() => {
+    const storedUser = authService.getUser();
+    return storedUser && authService.isAuthenticated() ? storedUser : null;
+  });
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = authService.getUser();
     if (storedUser && authService.isAuthenticated()) {
       setUser(storedUser);
+    } else {
+      authService.logout();
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (username: string, password: string) => {
@@ -55,6 +64,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         register,
         logout,
         isAuthenticated: !!user,
+        isLoading,
       }}
     >
       {children}

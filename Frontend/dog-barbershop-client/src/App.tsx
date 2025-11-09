@@ -1,11 +1,10 @@
-import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
-import { Appointments } from './pages/Appointments';
+import AppointmentsPage from './pages/appointments';
 
 function App() {
   return (
@@ -19,7 +18,7 @@ function App() {
             path="/appointments"
             element={
               <ProtectedRoute>
-                <Appointments />
+                <AppointmentsPage />
               </ProtectedRoute>
             }
           />

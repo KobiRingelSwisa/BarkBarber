@@ -120,14 +120,14 @@ public class AppointmentsController : ControllerBase
             return BadRequest("Scheduled date cannot be in the past.");
         }
 
-        var appointment = await _appointmentService.UpdateAppointmentAsync(id, userId, request);
+        var updatedAppointment = await _appointmentService.UpdateAppointmentAsync(id, userId, request);
 
-        if (appointment == null)
+        if (updatedAppointment == null)
         {
             return NotFound("Appointment not found or invalid data.");
         }
 
-        return Ok(appointment);
+        return Ok(updatedAppointment);
     }
 
     [HttpDelete("{id}")]
